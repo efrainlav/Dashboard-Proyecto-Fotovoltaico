@@ -1,0 +1,2574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visor & Dashboard Proyecto Solar Fotovoltaico vr 1.0</title>
+  <meta name="description" content="Dashboard geoespacial de seguimiento integral para el Parque Solar Fotovoltaico Sol de La Guajira (200 MWp): Avance de Obra, Subestación, Gestión Ambiental y Entorno Social.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <style>
+    :root {
+      color-scheme: light;
+      --solar-amber: #f59e0b;
+      --solar-orange: #d97706;
+      --solar-gold: #fbbf24;
+      --solar-blue: #0284c7;
+      --solar-sky: #38bdf8;
+      --solar-dark: #0f172a;
+      --solar-slate: #1e293b;
+      --solar-card: #ffffff;
+      --solar-border: #e2e8f0;
+      --solar-bg: #f8fafc;
+      --solar-muted: #64748b;
+      --eco-green: #10b981;
+      --eco-dark: #047857;
+      --danger-red: #ef4444;
+      --font-display: "Outfit", sans-serif;
+      --font-body: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: var(--font-body);
+      color: var(--solar-dark);
+      background: var(--solar-bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      height: 100vh;
+      height: 100dvh;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      overflow: hidden;
+    }
+
+    /* --- TOPBAR MODERNO SOLAR --- */
+    .topbar {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 65%, #1e3a8a 100%);
+      color: #ffffff;
+      border-bottom: 3.5px solid var(--solar-amber);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+      z-index: 1000;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+      flex-shrink: 0;
+    }
+
+    .brand-icon-box svg {
+      width: 28px;
+      height: 28px;
+      fill: #ffffff;
+    }
+
+    .brand-titles h1 {
+      font-family: var(--font-display);
+      font-size: 17.5px;
+      font-weight: 750;
+      letter-spacing: -0.2px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(245, 158, 11, 0.22);
+      color: var(--solar-gold);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      font-size: 11.5px;
+      color: #94a3b8;
+      margin-top: 2px;
+      font-weight: 450;
+    }
+
+    .top-widgets {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .meteo-pill {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 11.5px;
+    }
+
+    .meteo-item {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.25;
+    }
+
+    .meteo-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+
+    .meteo-val {
+      font-weight: 700;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .meteo-val.highlight {
+      color: var(--solar-gold);
+    }
+
+    .meteo-divider {
+      width: 1px;
+      height: 22px;
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-top {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-top:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: var(--solar-amber);
+    }
+
+    .mobile-hamburger {
+      display: none;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 6px;
+    }
+
+    /* --- BARRA DE PROGRAMACIÓN SEMANAL --- */
+    .day-nav {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 20px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--solar-border);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+      z-index: 900;
+      flex-wrap: wrap;
+    }
+
+    .week-picker {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 220px;
+    }
+
+    .week-picker-label {
+      font-size: 9.5px;
+      text-transform: uppercase;
+      font-weight: 750;
+      letter-spacing: 0.5px;
+      color: var(--solar-orange);
+    }
+
+    .week-select {
+      height: 32px;
+      padding: 0 10px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--solar-slate);
+      background-color: #f8fafc;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .week-select:focus {
+      border-color: var(--solar-orange);
+      background-color: #ffffff;
+    }
+
+    .day-buttons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .day-button {
+      height: 32px;
+      padding: 0 12px;
+      border: 1.5px solid var(--solar-border);
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--solar-slate);
+      font-family: inherit;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .day-button:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+
+    .day-button.is-active {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      border-color: #0f172a;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+    }
+
+    .day-button.is-active .day-date {
+      color: var(--solar-gold);
+    }
+
+    .day-date {
+      font-size: 10px;
+      color: var(--solar-muted);
+      font-weight: 700;
+    }
+
+    .day-feedback {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--solar-muted);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    /* --- WORKSPACE & GRID --- */
+    .workspace {
+      min-height: 0;
+      height: 100%;
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(320px, 370px) minmax(0, 1fr);
+      gap: 12px;
+      padding: 12px;
+      overflow: hidden;
+      background: #f1f5f9;
+    }
+
+    /* --- SIDEBAR & TABS --- */
+    .sidebar {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      border: 1px solid var(--solar-border);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+
+    .sidebar-tabs {
+      display: flex;
+      background: #f8fafc;
+      padding: 6px;
+      gap: 4px;
+      border-bottom: 1.5px solid var(--solar-border);
+      overflow-x: auto;
+    }
+
+    .sidebar-tab-btn {
+      flex: 1;
+      min-width: 60px;
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 8px 6px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--solar-muted);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .sidebar-tab-btn:hover {
+      color: var(--solar-dark);
+      background: #ffffff;
+    }
+
+    .sidebar-tab-btn.is-active {
+      background: #ffffff;
+      color: var(--solar-orange);
+      border-color: #cbd5e1;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      border-bottom: 2.5px solid var(--solar-orange);
+    }
+
+    .sidebar-tab-icon {
+      font-size: 15px;
+    }
+
+    .sidebar-tab-label {
+      font-size: 10px;
+      letter-spacing: -0.1px;
+    }
+
+    /* --- PANELES CONTENIDO --- */
+    .panel-view {
+      min-height: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--solar-border);
+      background: #ffffff;
+    }
+
+    .panel-header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .panel-eyebrow {
+      font-size: 9.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--solar-orange);
+    }
+
+    .panel-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 750;
+      color: var(--solar-dark);
+      margin-top: 3px;
+    }
+
+    .panel-subtitle {
+      font-size: 11px;
+      color: var(--solar-muted);
+      margin-top: 2px;
+    }
+
+    .panel-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      background: #f1f5f9;
+      color: var(--solar-slate);
+    }
+
+    .panel-reset-btn {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: var(--solar-slate);
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.15s;
+    }
+
+    .panel-reset-btn:hover {
+      background: #e2e8f0;
+      color: var(--solar-dark);
+    }
+
+    .panel-body-scroll {
+      min-height: 0;
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* --- TARJETAS KPI (ESTILO ARCGIS ONLINE) --- */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .kpi-card {
+      background: #ffffff;
+      border: 1px solid var(--solar-border);
+      border-radius: 7px;
+      padding: 10px 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+      transition: border-color 0.15s;
+    }
+
+    .kpi-card:hover {
+      border-color: #cbd5e1;
+    }
+
+    .kpi-card.is-full {
+      grid-column: 1 / -1;
+    }
+
+    .kpi-card-main {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+
+    .kpi-card-main .kpi-title {
+      color: #94a3b8;
+    }
+
+    .kpi-card-main .kpi-value {
+      color: var(--solar-gold);
+    }
+
+    .kpi-card-main .kpi-caption {
+      color: #cbd5e1;
+    }
+
+    .kpi-title {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--solar-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .kpi-value {
+      font-family: var(--font-display);
+      font-size: 21px;
+      font-weight: 750;
+      color: var(--solar-dark);
+      margin: 4px 0 2px;
+      line-height: 1.1;
+    }
+
+    .kpi-caption {
+      font-size: 10px;
+      color: var(--solar-muted);
+    }
+
+    .progress-bar-bg {
+      height: 6px;
+      width: 100%;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--solar-amber) 0%, var(--solar-orange) 100%);
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    .progress-bar-fill.green {
+      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    }
+
+    .progress-bar-fill.blue {
+      background: linear-gradient(90deg, #0284c7 0%, #0369a1 100%);
+    }
+
+    /* --- SELECTORES EN PANELES --- */
+    .filter-selector {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1.5px solid var(--solar-border);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--solar-dark);
+      background-color: #ffffff;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .filter-selector:focus {
+      border-color: var(--solar-orange);
+    }
+
+    /* --- LISTA DE ACTIVIDADES (PROGRAMACIÓN) --- */
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .activity-item {
+      padding: 10px 12px;
+      background: #ffffff;
+      border: 1px solid var(--solar-border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+
+    .activity-item:hover {
+      background: #f8fafc;
+      border-color: var(--solar-amber);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .activity-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      background: #fef3c7;
+      color: #b45309;
+      margin-bottom: 4px;
+    }
+
+    .activity-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--solar-slate);
+      line-height: 1.3;
+    }
+
+    .activity-location {
+      font-size: 11px;
+      color: var(--solar-muted);
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* --- TARJETAS DE SEMÁFORO SOCIAL --- */
+    .social-kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .social-kpi-card {
+      border-radius: 6px;
+      padding: 8px 6px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1.5px solid transparent;
+    }
+
+    .social-kpi-card:hover {
+      transform: translateY(-1px);
+    }
+
+    .social-kpi-card.is-active {
+      box-shadow: 0 0 0 2px #0f172a;
+    }
+
+    .social-kpi-card.total {
+      background: #f1f5f9;
+      color: var(--solar-slate);
+      border-color: #cbd5e1;
+    }
+
+    .social-kpi-card.verde {
+      background: #ecfdf5;
+      color: #065f46;
+      border-color: #a7f3d0;
+    }
+
+    .social-kpi-card.amarillo {
+      background: #fefce8;
+      color: #854d0e;
+      border-color: #fef08a;
+    }
+
+    .social-kpi-card.rojo {
+      background: #fef2f2;
+      color: #991b1b;
+      border-color: #fecaca;
+    }
+
+    .social-kpi-val {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .social-kpi-lbl {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    /* --- FICHA TÉCNICA COMUNITARIA & AMBIENTAL --- */
+    .dossier-box {
+      background: #f8fafc;
+      border: 1px solid var(--solar-border);
+      border-radius: 7px;
+      padding: 12px;
+    }
+
+    .dossier-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px dashed #e2e8f0;
+      font-size: 11px;
+    }
+
+    .dossier-row:last-child {
+      border-bottom: none;
+    }
+
+    .dossier-lbl {
+      color: var(--solar-muted);
+      font-weight: 600;
+    }
+
+    .dossier-val {
+      color: var(--solar-dark);
+      font-weight: 700;
+      text-align: right;
+    }
+
+    /* --- MAPA LEAFLET --- */
+    .map-container {
+      min-height: 0;
+      height: 100%;
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--solar-border);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      background: #e5e7eb;
+    }
+
+    /* Controles flotantes en el mapa */
+    .map-floating-panel {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      border-radius: 8px;
+      padding: 10px 14px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      z-index: 800;
+      font-size: 11px;
+      max-width: 260px;
+    }
+
+    .map-floating-title {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 750;
+      color: var(--solar-dark);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .layer-control-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .layer-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--solar-slate);
+    }
+
+    .layer-item input {
+      accent-color: var(--solar-orange);
+      cursor: pointer;
+    }
+
+    .layer-icon-bullet {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    /* Map Navigation Quick Bar */
+    .map-quick-bar {
+      position: absolute;
+      bottom: 24px;
+      left: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 800;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(6px);
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    }
+
+    .map-quick-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 4px 9px;
+      border-radius: 5px;
+      font-size: 10.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.15s;
+    }
+
+    .map-quick-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: var(--solar-gold);
+    }
+
+    /* Popups Leaflet modernos */
+    .leaflet-popup-content-wrapper {
+      border-radius: 8px;
+      padding: 0;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+      font-family: var(--font-body);
+      overflow: hidden;
+    }
+
+    .leaflet-popup-content {
+      margin: 0;
+      line-height: 1.4;
+      font-size: 11.5px;
+    }
+
+    .solar-popup-head {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 10px 14px;
+      border-bottom: 2px solid var(--solar-amber);
+    }
+
+    .solar-popup-category {
+      font-size: 9px;
+      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      color: var(--solar-gold);
+    }
+
+    .solar-popup-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 750;
+      margin-top: 2px;
+      color: #ffffff;
+    }
+
+    .solar-popup-body {
+      padding: 12px 14px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .solar-popup-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      background: #f8fafc;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .solar-popup-metric-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .solar-popup-m-lbl {
+      font-size: 8.5px;
+      text-transform: uppercase;
+      color: var(--solar-muted);
+      font-weight: 700;
+    }
+
+    .solar-popup-m-val {
+      font-size: 12px;
+      font-weight: 750;
+      color: var(--solar-dark);
+    }
+
+    .solar-popup-action-btn {
+      width: 100%;
+      background: var(--solar-dark);
+      color: #ffffff;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 5px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+
+    .solar-popup-action-btn:hover {
+      background: var(--solar-orange);
+    }
+
+    /* Pulsing marker for highlighted objects */
+    .pulse-highlight {
+      animation: pulse-glow 1.5s infinite;
+    }
+
+    @keyframes pulse-glow {
+      0% { filter: drop-shadow(0 0 2px #f59e0b); }
+      50% { filter: drop-shadow(0 0 10px #f59e0b) drop-shadow(0 0 16px #f59e0b); }
+      100% { filter: drop-shadow(0 0 2px #f59e0b); }
+    }
+
+    /* --- RESPONSIVIDAD Y DRAWER MÓVIL --- */
+    @media (max-width: 900px) {
+      .app {
+        grid-template-rows: auto auto minmax(0, 1fr);
+      }
+      .workspace {
+        grid-template-columns: 1fr;
+        padding: 6px;
+        gap: 6px;
+      }
+      .mobile-hamburger {
+        display: block;
+      }
+      .top-widgets {
+        display: none;
+      }
+      .topbar {
+        padding: 10px 14px;
+      }
+      .day-nav {
+        padding: 8px 14px;
+        gap: 10px;
+      }
+      .sidebar {
+        max-height: 48vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="brand">
+        <button id="mobile-menu-btn" class="mobile-hamburger" type="button" aria-label="Abrir menú">☰</button>
+        <div class="brand-icon-box">
+          <!-- Solar SVG icon -->
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1>
+            <span>Visor & Dashboard Proyecto Solar Fotovoltaico</span>
+            <span class="brand-tag">200 MWp</span>
+          </h1>
+          <div class="subtitle">Parque Solar Sol de La Guajira · Seguimiento Técnico, Ambiental y Comunitario</div>
+        </div>
+      </div>
+
+      <!-- METEO & KPI WIDGETS -->
+      <div class="top-widgets">
+        <div class="meteo-pill">
+          <div class="meteo-item">
+            <span class="meteo-label">☀️ Radiación GHI</span>
+            <span class="meteo-val highlight">942 W/m²</span>
+          </div>
+          <div class="meteo-divider"></div>
+          <div class="meteo-item">
+            <span class="meteo-label">🌡️ Temp. Módulo</span>
+            <span class="meteo-val">51.8 °C</span>
+          </div>
+          <div class="meteo-divider"></div>
+          <div class="meteo-item">
+            <span class="meteo-label">🌱 CO₂ Mitigado</span>
+            <span class="meteo-val" style="color: #34d399;">186.750 t/año</span>
+          </div>
+          <div class="meteo-divider"></div>
+          <div class="meteo-item">
+            <span class="meteo-label">📊 Avance Global</span>
+            <span class="meteo-val" style="color: var(--solar-gold);">64.8 %</span>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <button id="btn-focus-park" class="btn-top" type="button" title="Centrar en el Parque Solar">
+            <span>🗺️</span> <span>Parque Solar</span>
+          </button>
+          <button id="btn-focus-all" class="btn-top" type="button" title="Ver todo el territorio">
+            <span>🔍</span> <span>Ver Todo</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- BARRA DE PROGRAMACIÓN SEMANAL -->
+    <nav class="day-nav" aria-label="Navegación temporal de obra">
+      <div class="week-picker">
+        <label class="week-picker-label" for="week-select">Semana de Operación & Montaje</label>
+        <select id="week-select" class="week-select">
+          <option>Cargando semanas...</option>
+        </select>
+      </div>
+
+      <div class="day-buttons">
+        <button class="day-button" type="button" data-day="monday"><span class="day-name">Lunes</span> <span class="day-date"></span></button>
+        <button class="day-button" type="button" data-day="tuesday"><span class="day-name">Martes</span> <span class="day-date"></span></button>
+        <button class="day-button" type="button" data-day="wednesday"><span class="day-name">Miércoles</span> <span class="day-date"></span></button>
+        <button class="day-button" type="button" data-day="thursday"><span class="day-name">Jueves</span> <span class="day-date"></span></button>
+        <button class="day-button" type="button" data-day="friday"><span class="day-name">Viernes</span> <span class="day-date"></span></button>
+        <button class="day-button" type="button" data-day="week-summary">Resumen <span class="day-date">Semanal</span></button>
+      </div>
+
+      <div id="day-feedback" class="day-feedback">Selecciona una jornada para sincronizar el mapa</div>
+    </nav>
+
+    <!-- WORKSPACE -->
+    <main class="workspace">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <!-- PESTAÑAS DEL PANEL LATERAL -->
+        <nav class="sidebar-tabs" role="tablist">
+          <button id="tab-btn-schedule" class="sidebar-tab-btn is-active" type="button" data-tab="schedule">
+            <span class="sidebar-tab-icon">📋</span>
+            <span class="sidebar-tab-label">Cronograma</span>
+          </button>
+          <button id="tab-btn-blocks" class="sidebar-tab-btn" type="button" data-tab="blocks">
+            <span class="sidebar-tab-icon">☀️</span>
+            <span class="sidebar-tab-label">Bloques FV</span>
+          </button>
+          <button id="tab-btn-substation" class="sidebar-tab-btn" type="button" data-tab="substation">
+            <span class="sidebar-tab-icon">⚡</span>
+            <span class="sidebar-tab-label">Subestación</span>
+          </button>
+          <button id="tab-btn-ambient" class="sidebar-tab-btn" type="button" data-tab="ambient">
+            <span class="sidebar-tab-icon">🌿</span>
+            <span class="sidebar-tab-label">Ambiental</span>
+          </button>
+          <button id="tab-btn-entorno" class="sidebar-tab-btn" type="button" data-tab="entorno">
+            <span class="sidebar-tab-icon">👥</span>
+            <span class="sidebar-tab-label">Entorno</span>
+          </button>
+        </nav>
+
+        <!-- PANEL 1: PROGRAMACIÓN DE OBRA -->
+        <div id="panel-schedule" class="panel-view">
+          <header class="panel-header">
+            <div class="panel-eyebrow">FRENTES OPERATIVOS EN CAMPO</div>
+            <h2 id="activity-day-title" class="panel-title">Selecciona un día</h2>
+            <div id="activity-day-meta" class="panel-subtitle">Cuadrillas activas en hincado, montaje y cableado</div>
+          </header>
+          <div id="activity-list-container" class="panel-body-scroll">
+            <div class="activity-list" id="activity-items-list">
+              <!-- Renderizado dinámico -->
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 2: AVANCE BLOQUES SOLARES -->
+        <div id="panel-blocks" class="panel-view" style="display: none;">
+          <header class="panel-header">
+            <div class="panel-header-top">
+              <div>
+                <span id="blocks-scope-badge" class="panel-badge">Consolidado 200 MWp</span>
+                <h2 id="blocks-scope-title" class="panel-title">Todo el Parque Solar</h2>
+              </div>
+              <button id="blocks-reset-btn" class="panel-reset-btn" type="button" style="display: none;">
+                ↺ Ver Todo
+              </button>
+            </div>
+            <div id="blocks-scope-subtitle" class="panel-subtitle">10 Bloques Fotovoltaicos · 328.000 Módulos Bifaciales</div>
+          </header>
+          <div class="panel-body-scroll">
+            <div>
+              <label for="block-quick-select" style="font-size: 10px; font-weight: 700; color: var(--solar-muted); text-transform: uppercase;">Seleccionar Bloque Específico:</label>
+              <select id="block-quick-select" class="filter-selector" style="margin-top: 4px;">
+                <option value="ALL">Todo el Parque (Consolidado 10 Bloques)</option>
+              </select>
+            </div>
+
+            <!-- KPI Cards Bloques -->
+            <div class="kpi-grid">
+              <div class="kpi-card kpi-card-main is-full">
+                <div class="kpi-title">Avance Ponderado Global</div>
+                <div class="kpi-value" id="kpi-block-ponderado">64.8 %</div>
+                <div class="kpi-caption" id="kpi-block-caption">10 Bloques FV · 196.8 MWp en Construcción</div>
+                <div class="progress-bar-bg" style="background: rgba(255,255,255,0.2);">
+                  <div class="progress-bar-fill" id="bar-block-ponderado" style="width: 64.8%; background: var(--solar-gold);"></div>
+                </div>
+              </div>
+
+              <!-- Hincado -->
+              <div class="kpi-card">
+                <div class="kpi-title">Hincado Pilotes</div>
+                <div class="kpi-value" id="kpi-val-hincado">80.0 %</div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" id="bar-val-hincado" style="width: 80.0%;"></div>
+                </div>
+                <div class="kpi-caption" style="margin-top: 4px;">39.360 / 49.200 perfiles</div>
+              </div>
+
+              <!-- Estructura Trackers -->
+              <div class="kpi-card">
+                <div class="kpi-title">Estructura Trackers</div>
+                <div class="kpi-value" id="kpi-val-estructura">68.0 %</div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" id="bar-val-estructura" style="width: 68.0%;"></div>
+                </div>
+                <div class="kpi-caption" style="margin-top: 4px;">2.230 / 3.280 seguidores 1P</div>
+              </div>
+
+              <!-- Módulos Bifaciales -->
+              <div class="kpi-card">
+                <div class="kpi-title">Módulos Solares</div>
+                <div class="kpi-value" id="kpi-val-modulos">55.4 %</div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill green" id="bar-val-modulos" style="width: 55.4%;"></div>
+                </div>
+                <div class="kpi-caption" style="margin-top: 4px;">181.700 / 328.000 paneles</div>
+              </div>
+
+              <!-- Zanjeo -->
+              <div class="kpi-card">
+                <div class="kpi-title">Zanjeo & Ductería</div>
+                <div class="kpi-value" id="kpi-val-zanjeo">70.1 %</div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" id="bar-val-zanjeo" style="width: 70.1%;"></div>
+                </div>
+                <div class="kpi-caption" style="margin-top: 4px;">84.1 km de zanjas BT/MT</div>
+              </div>
+
+              <!-- Cableado DC/MT -->
+              <div class="kpi-card">
+                <div class="kpi-title">Cableado Strings</div>
+                <div class="kpi-value" id="kpi-val-cableado">49.4 %</div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill blue" id="bar-val-cableado" style="width: 49.4%;"></div>
+                </div>
+                <div class="kpi-caption" style="margin-top: 4px;">7.110 cadenas conectadas</div>
+              </div>
+
+              <!-- Comisionamiento -->
+              <div class="kpi-card">
+                <div class="kpi-title">Comisionamiento</div>
+                <div class="kpi-value" id="kpi-val-comision">34.0 %</div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" id="bar-val-comision" style="width: 34.0%;"></div>
+                </div>
+                <div class="kpi-caption" style="margin-top: 4px;">Pruebas I-V y energización</div>
+              </div>
+            </div>
+
+            <!-- Ficha Técnica Bloque Activo -->
+            <div class="dossier-box" id="block-dossier-box">
+              <div style="font-size: 11px; font-weight: 800; color: var(--solar-dark); margin-bottom: 6px;">DATOS TÉCNICOS DEL BLOQUE</div>
+              <div class="dossier-row">
+                <span class="dossier-lbl">Potencia Pico:</span>
+                <span class="dossier-val" id="dossier-mwp">196.8 MWp Total</span>
+              </div>
+              <div class="dossier-row">
+                <span class="dossier-lbl">Centro Inversor / Skid:</span>
+                <span class="dossier-val" id="dossier-inversor">10 Centros CT-01 a CT-10</span>
+              </div>
+              <div class="dossier-row">
+                <span class="dossier-lbl">Tecnología Módulo:</span>
+                <span class="dossier-val">Bifacial N-Type TOPCon 600Wp</span>
+              </div>
+              <div class="dossier-row">
+                <span class="dossier-lbl">Seguidores:</span>
+                <span class="dossier-val">Monofila 1P Tracker (±60°)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 3: SUBESTACIÓN & LÍNEA 110 KV -->
+        <div id="panel-substation" class="panel-view" style="display: none;">
+          <header class="panel-header">
+            <div class="panel-eyebrow">EVACUACIÓN ELÉCTRICA DE ALTA TENSIÓN</div>
+            <h2 class="panel-title">SE Guajira Solar & LAT 110 kV</h2>
+            <div class="panel-subtitle">Subestación 34.5/110 kV · 18 Torres de Transmisión (8.75 km)</div>
+          </header>
+          <div class="panel-body-scroll">
+            <!-- SE Guajira Solar -->
+            <div class="kpi-card kpi-card-main">
+              <div class="kpi-title">Subestación Elevadora 34.5/110 kV</div>
+              <div class="kpi-value">74.5 %</div>
+              <div class="kpi-caption">Transformador 160 MVA · Celdas GIS libres de SF6</div>
+              <div class="progress-bar-bg" style="background: rgba(255,255,255,0.2);">
+                <div class="progress-bar-fill" style="width: 74.5%; background: var(--solar-gold);"></div>
+              </div>
+            </div>
+
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-title">Obra Civil SE</div>
+                <div class="kpi-value">92.0 %</div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill green" style="width: 92%;"></div></div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Electromecánico</div>
+                <div class="kpi-value">78.0 %</div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 78%;"></div></div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Celdas GIS MT</div>
+                <div class="kpi-value">85.0 %</div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill green" style="width: 85%;"></div></div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Sistema BESS (Baterías)</div>
+                <div class="kpi-value">40.0 %</div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill blue" style="width: 40%;"></div></div>
+              </div>
+            </div>
+
+            <!-- Selector de Torre -->
+            <div style="margin-top: 8px;">
+              <label for="tower-select" style="font-size: 10px; font-weight: 700; color: var(--solar-muted); text-transform: uppercase;">Seleccionar Estructura LAT 110 kV:</label>
+              <select id="tower-select" class="filter-selector" style="margin-top: 4px;">
+                <option value="ALL">Consolidado Línea (18 Torres / Postes)</option>
+              </select>
+            </div>
+
+            <!-- KPI Línea -->
+            <div class="kpi-grid" id="tower-kpis-container">
+              <div class="kpi-card">
+                <div class="kpi-title">Cimentación Torres</div>
+                <div class="kpi-value" id="kpi-lat-ciment">68.0 %</div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar-lat-ciment" style="width: 68%;"></div></div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Izaje Estructuras</div>
+                <div class="kpi-value" id="kpi-lat-izaje">55.0 %</div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar-lat-izaje" style="width: 55%;"></div></div>
+              </div>
+              <div class="kpi-card is-full">
+                <div class="kpi-title">Tendido de Conductor ACSR + OPGW</div>
+                <div class="kpi-value" id="kpi-lat-tendido">42.0 %</div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill blue" id="bar-lat-tendido" style="width: 42%;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 4: GESTIÓN AMBIENTAL & BIÓTICA -->
+        <div id="panel-ambient" class="panel-view" style="display: none;">
+          <header class="panel-header">
+            <div class="panel-eyebrow">CUMPLIMIENTO PMA & BIODIVERSIDAD</div>
+            <h2 class="panel-title">Gestión Ambiental & Biótica</h2>
+            <div class="panel-subtitle">Resolución ANLA 01842 · Rescate de Fauna, Flora y Drenajes</div>
+          </header>
+          <div class="panel-body-scroll">
+            <div class="kpi-card kpi-card-main">
+              <div class="kpi-title">Cumplimiento General PMA</div>
+              <div class="kpi-value" style="color: #34d399;">94.6 %</div>
+              <div class="kpi-caption">Obligaciones ambientales al día ante la ANLA</div>
+              <div class="progress-bar-bg" style="background: rgba(255,255,255,0.2);">
+                <div class="progress-bar-fill" style="width: 94.6%; background: #34d399;"></div>
+              </div>
+            </div>
+
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-title">Fauna Rescatada</div>
+                <div class="kpi-value" style="color: var(--eco-green);">142</div>
+                <div class="kpi-caption">Individuos reubicados</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Vivero Flora</div>
+                <div class="kpi-value" style="color: var(--solar-orange);">4.850</div>
+                <div class="kpi-caption">Cactáceas en custodia</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Obras de Drenaje</div>
+                <div class="kpi-value" style="color: var(--solar-blue);">8</div>
+                <div class="kpi-caption">Puntos de cauce y alivio</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Compensación 1%</div>
+                <div class="kpi-value" style="color: var(--eco-green);">12.500</div>
+                <div class="kpi-caption">Árboles nativos sembrados</div>
+              </div>
+            </div>
+
+            <!-- Selector de Obra Ambiental -->
+            <div>
+              <label for="ambient-select" style="font-size: 10px; font-weight: 700; color: var(--solar-muted); text-transform: uppercase;">Inspeccionar Punto Ambiental:</label>
+              <select id="ambient-select" class="filter-selector" style="margin-top: 4px;">
+                <option value="ALL">Todos los puntos ambientales (9 intervenciones)</option>
+              </select>
+            </div>
+
+            <!-- Ficha Detallada Ambiental -->
+            <div class="dossier-box" id="ambient-dossier-box">
+              <div style="font-size: 11px; font-weight: 800; color: var(--solar-dark); margin-bottom: 6px;">COMPONENTE DE SOSTENIBILIDAD</div>
+              <div class="dossier-row">
+                <span class="dossier-lbl">Generación Limpia Estimada:</span>
+                <span class="dossier-val">415 GWh / año</span>
+              </div>
+              <div class="dossier-row">
+                <span class="dossier-lbl">CO₂ Evitado Anualmente:</span>
+                <span class="dossier-val" style="color: var(--eco-green);">186.750 Toneladas</span>
+              </div>
+              <div class="dossier-row">
+                <span class="dossier-lbl">Equivalencia Hogares:</span>
+                <span class="dossier-val">210.000 hogares</span>
+              </div>
+              <div class="dossier-row">
+                <span class="dossier-lbl">Consumo Hídrico Paneles:</span>
+                <span class="dossier-val">Tecnología de limpieza en seco</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 5: ENTORNO SOCIAL & COMUNIDADES -->
+        <div id="panel-entorno" class="panel-view" style="display: none;">
+          <header class="panel-header">
+            <div class="panel-eyebrow">RELACIONAMIENTO & CONSULTA PREVIA</div>
+            <h2 class="panel-title">Entorno Social & Comunidades</h2>
+            <div class="panel-subtitle">122 Asentamientos · Gestión Social y Empleo Local</div>
+          </header>
+          <div class="panel-body-scroll">
+            <!-- Semáforo Social Interactivo -->
+            <div>
+              <div style="font-size: 10px; font-weight: 700; color: var(--solar-muted); text-transform: uppercase; margin-bottom: 4px;">FILTRO ESPACIAL DE RELACIONAMIENTO:</div>
+              <div class="social-kpi-row">
+                <div class="social-kpi-card total is-active" data-semaforo="ALL" title="Ver todas las comunidades">
+                  <div class="social-kpi-val" id="soc-count-total">122</div>
+                  <div class="social-kpi-lbl">Total</div>
+                </div>
+                <div class="social-kpi-card verde" data-semaforo="Verde" title="Filtrar favorables / diálogo fluido">
+                  <div class="social-kpi-val" id="soc-count-verde">75</div>
+                  <div class="social-kpi-lbl">🟢 Verde</div>
+                </div>
+                <div class="social-kpi-card amarillo" data-semaforo="Amarillo" title="Filtrar en concertación">
+                  <div class="social-kpi-val" id="soc-count-amarillo">35</div>
+                  <div class="social-kpi-lbl">🟡 Atenc.</div>
+                </div>
+                <div class="social-kpi-card rojo" data-semaforo="Rojo" title="Filtrar alertas prioritarias">
+                  <div class="social-kpi-val" id="soc-count-rojo">12</div>
+                  <div class="social-kpi-lbl">🔴 Alerta</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Selector de Comunidad -->
+            <div style="margin-top: 4px;">
+              <label for="community-select" style="font-size: 10px; font-weight: 700; color: var(--solar-muted); text-transform: uppercase;">Buscar o Elegir Comunidad:</label>
+              <select id="community-select" class="filter-selector" style="margin-top: 4px;">
+                <option value="">Selecciona una comunidad...</option>
+              </select>
+            </div>
+
+            <!-- Ficha Técnica Comunitaria -->
+            <div class="dossier-box" id="community-dossier-box">
+              <div style="font-size: 12px; font-weight: 800; color: var(--solar-dark); margin-bottom: 6px;" id="dossier-com-title">
+                Selecciona una comunidad
+              </div>
+              <div class="dossier-row">
+                <span class="dossier-lbl">Semáforo Social:</span>
+                <span class="dossier-val" id="dossier-com-sem">-</span>
+              </div>
+              <div class="dossier-row">
+                <span class="dossier-lbl">Tipo de Influencia:</span>
+                <span class="dossier-val" id="dossier-com-infl">-</span>
+              </div>
+              <div class="dossier-row">
+                <span class="dossier-lbl">Distancia al Parque Solar:</span>
+                <span class="dossier-val" id="dossier-com-dist">-</span>
+              </div>
+              <div class="dossier-row">
+                <span class="dossier-lbl">Mano de Obra Local Activa:</span>
+                <span class="dossier-val" id="dossier-com-empleo" style="color: var(--solar-orange);">-</span>
+              </div>
+              <div class="dossier-row">
+                <span class="dossier-lbl">Estado Consulta:</span>
+                <span class="dossier-val" id="dossier-com-consulta" style="font-size: 10px;">-</span>
+              </div>
+              <div style="margin-top: 8px;">
+                <span class="dossier-lbl" style="font-size: 10px; text-transform: uppercase; font-weight: 800;">Convenio de Inversión Social Solar:</span>
+                <div id="dossier-com-convenio" style="font-size: 11px; color: var(--solar-slate); margin-top: 2px; font-weight: 500; background: #ffffff; padding: 6px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                  -
+                </div>
+              </div>
+              <div style="margin-top: 8px;">
+                <span class="dossier-lbl" style="font-size: 10px; text-transform: uppercase; font-weight: 800;">Última Bitácora y Observaciones:</span>
+                <div id="dossier-com-bitacora" style="font-size: 10.5px; color: var(--solar-muted); margin-top: 2px; line-height: 1.35;">
+                  Haz clic en cualquier comunidad en el mapa o en el selector superior.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAPA CARTOGRÁFICO -->
+      <section class="map-container" aria-label="Visor geoespacial interactivo">
+        <div id="map"></div>
+
+        <!-- CONTROL DE CAPAS FLOTANTE -->
+        <div class="map-floating-panel">
+          <div class="map-floating-title">
+            <span>🗺️</span> <span>Capas del Parque Solar</span>
+          </div>
+          <div class="layer-control-list">
+            <label class="layer-item">
+              <input type="checkbox" id="layer-chk-bloques" checked>
+              <span class="layer-icon-bullet" style="background: var(--solar-amber);"></span>
+              <span>Bloques Solares (10)</span>
+            </label>
+            <label class="layer-item">
+              <input type="checkbox" id="layer-chk-area" checked>
+              <span class="layer-icon-bullet" style="background: #38bdf8;"></span>
+              <span>Polígono del Parque</span>
+            </label>
+            <label class="layer-item">
+              <input type="checkbox" id="layer-chk-inversores" checked>
+              <span class="layer-icon-bullet" style="background: #0d9488;"></span>
+              <span>Inversores / Skids CT</span>
+            </label>
+            <label class="layer-item">
+              <input type="checkbox" id="layer-chk-subestacion" checked>
+              <span class="layer-icon-bullet" style="background: #eab308;"></span>
+              <span>Subestación 110 kV</span>
+            </label>
+            <label class="layer-item">
+              <input type="checkbox" id="layer-chk-linea" checked>
+              <span class="layer-icon-bullet" style="background: #64748b;"></span>
+              <span>Línea Evacuación LAT</span>
+            </label>
+            <label class="layer-item">
+              <input type="checkbox" id="layer-chk-meteo" checked>
+              <span class="layer-icon-bullet" style="background: #fbbf24;"></span>
+              <span>Estación Solarimetría</span>
+            </label>
+            <label class="layer-item">
+              <input type="checkbox" id="layer-chk-ambientales" checked>
+              <span class="layer-icon-bullet" style="background: var(--eco-green);"></span>
+              <span>Gestión Ambiental / Cauces</span>
+            </label>
+            <label class="layer-item">
+              <input type="checkbox" id="layer-chk-comunidades" checked>
+              <span class="layer-icon-bullet" style="background: #d97706;"></span>
+              <span>Comunidades (122)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- ACCIONES RÁPIDAS DEL MAPA -->
+        <div class="map-quick-bar">
+          <button class="map-quick-btn" id="qbtn-park" type="button">☀️ Parque</button>
+          <button class="map-quick-btn" id="qbtn-sub" type="button">⚡ Subestación</button>
+          <button class="map-quick-btn" id="qbtn-line" type="button">🗼 Línea LAT</button>
+          <button class="map-quick-btn" id="qbtn-env" type="button">🌿 Ambiental</button>
+          <button class="map-quick-btn" id="qbtn-all" type="button">🌎 Extensión Total</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- LEAFLET JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- LOGICA DE LA APLICACIÓN -->
+  <script>
+    // --- ESTADO GLOBAL DE LA APLICACIÓN ---
+    const appState = {
+      activeTab: "schedule",
+      selectedWeekId: null,
+      selectedDayKey: "monday",
+      selectedBlockId: "ALL",
+      selectedTowerId: "ALL",
+      selectedAmbientId: "ALL",
+      selectedCommunityId: null,
+      activeSocialFilter: "ALL",
+      scheduleData: null,
+      geoLayers: {},
+      markers: {
+        blocks: {},
+        inversores: {},
+        subestacion: null,
+        towers: {},
+        line: null,
+        meteo: null,
+        ambientales: {},
+        comunidades: {}
+      }
+    };
+
+    // --- INICIALIZACIÓN DEL MAPA LEAFLET ---
+    const map = L.map('map', {
+      center: [11.610, -72.019],
+      zoom: 14,
+      zoomControl: true
+    });
+
+    // Capas Base: Esri World Imagery (Satélite) y OpenStreetMap
+    const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Esri, Maxar, Earthstar Geographics',
+      maxZoom: 19
+    }).addTo(map);
+
+    const osmStreet = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    });
+
+    L.control.layers({
+      "🛰️ Satélite Alta Resolución": esriSatellite,
+      "🗺️ Callejero OpenStreetMap": osmStreet
+    }, null, { position: 'topleft' }).addTo(map);
+
+    L.control.scale({ imperial: false, metric: true, position: 'bottomright' }).addTo(map);
+
+    // Grupos de capas Leaflet para encender/apagar
+    const layerGroups = {
+      area: L.layerGroup().addTo(map),
+      bloques: L.layerGroup().addTo(map),
+      inversores: L.layerGroup().addTo(map),
+      subestacion: L.layerGroup().addTo(map),
+      linea: L.layerGroup().addTo(map),
+      meteo: L.layerGroup().addTo(map),
+      ambientales: L.layerGroup().addTo(map),
+      comunidades: L.layerGroup().addTo(map)
+    };
+
+    // --- ICONOS VECTORIALES PERSONALIZADOS ---
+    function makeCustomIcon(iconUrl, size = [26, 26]) {
+      return L.icon({
+        iconUrl: iconUrl,
+        iconSize: size,
+        iconAnchor: [size[0] / 2, size[1] / 2],
+        popupAnchor: [0, -size[1] / 2]
+      });
+    }
+
+    const icons = {
+      inverter: makeCustomIcon('svg/inverter.svg', [24, 24]),
+      substation: makeCustomIcon('svg/substation.svg', [28, 28]),
+      tower: makeCustomIcon('svg/transmission-tower.svg', [22, 22]),
+      meteo: makeCustomIcon('svg/meteo.svg', [26, 26]),
+      environmental: makeCustomIcon('svg/environmental.svg', [24, 24]),
+      drainage: makeCustomIcon('svg/drainage.svg', [22, 22]),
+      communityGreen: L.divIcon({
+        className: 'custom-com-icon',
+        html: '<div style="background:#10b981; width:12px; height:12px; border-radius:50%; border:2px solid #ffffff; box-shadow:0 0 5px rgba(0,0,0,0.4);"></div>',
+        iconSize: [12, 12],
+        iconAnchor: [6, 6]
+      }),
+      communityYellow: L.divIcon({
+        className: 'custom-com-icon',
+        html: '<div style="background:#f59e0b; width:12px; height:12px; border-radius:50%; border:2px solid #ffffff; box-shadow:0 0 5px rgba(0,0,0,0.4);"></div>',
+        iconSize: [12, 12],
+        iconAnchor: [6, 6]
+      }),
+      communityRed: L.divIcon({
+        className: 'custom-com-icon',
+        html: '<div style="background:#ef4444; width:12px; height:12px; border-radius:50%; border:2px solid #ffffff; box-shadow:0 0 5px rgba(0,0,0,0.4);"></div>',
+        iconSize: [12, 12],
+        iconAnchor: [6, 6]
+      })
+    };
+
+    // --- CARGA DE DATOS ASÍNCRONOS ---
+    async function loadData() {
+      try {
+        const [
+          bloquesRes,
+          areaRes,
+          invRes,
+          subRes,
+          latRes,
+          meteoRes,
+          ambRes,
+          comRes,
+          schedRes
+        ] = await Promise.all([
+          fetch('./geojson/Bloques_Solares.geojson').then(r => r.json()),
+          fetch('./geojson/Area_Parque_Solar.geojson').then(r => r.json()),
+          fetch('./geojson/Inversores_Transformadores.geojson').then(r => r.json()),
+          fetch('./geojson/Subestacion_Solar.geojson').then(r => r.json()),
+          fetch('./geojson/Linea_Transmision.geojson').then(r => r.json()),
+          fetch('./geojson/Estacion_Meteorologica.geojson').then(r => r.json()),
+          fetch('./geojson/Obras_Drenaje_Ambientales.geojson').then(r => r.json()),
+          fetch('./geojson/Comunidades.geojson').then(r => r.json()),
+          fetch('./programacion-semanal.json').then(r => r.json())
+        ]);
+
+        appState.scheduleData = schedRes;
+        appState.geoLayers = {
+          bloques: bloquesRes,
+          area: areaRes,
+          inversores: invRes,
+          subestacion: subRes,
+          linea: latRes,
+          meteo: meteoRes,
+          ambientales: ambRes,
+          comunidades: comRes
+        };
+
+        renderAreaParque(areaRes);
+        renderBloquesSolares(bloquesRes);
+        renderInversores(invRes);
+        renderSubestacion(subRes);
+        renderLineaTransmision(latRes);
+        renderEstacionMeteo(meteoRes);
+        renderAmbientales(ambRes);
+        renderComunidades(comRes);
+
+        initScheduleControls(schedRes);
+        initSelectControls();
+        initNavigationTabs();
+        initLayerToggles();
+        initQuickMapButtons();
+        initSocialFilter();
+
+        // Feedback de carga
+        document.getElementById('day-feedback').textContent = "Sistema sincronizado · 10 Bloques FV cargados";
+      } catch (err) {
+        console.error("Error cargando capas:", err);
+        document.getElementById('day-feedback').textContent = "Error al cargar capas locales. Verifique consola.";
+      }
+    }
+
+    // --- RENDERIZADORES DE CAPAS EN LEAFLET ---
+
+    // 1. Área del Parque
+    function renderAreaParque(data) {
+      L.geoJSON(data, {
+        style: {
+          color: '#38bdf8',
+          weight: 2.5,
+          dashArray: '6, 6',
+          fillColor: '#0284c7',
+          fillOpacity: 0.04
+        },
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          layer.bindPopup(`
+            <div class="solar-popup-head">
+              <div class="solar-popup-category">POLÍGONO DEL PROYECTO</div>
+              <div class="solar-popup-title">${p.name}</div>
+            </div>
+            <div class="solar-popup-body">
+              <div class="solar-popup-metrics">
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Capacidad DC</span>
+                  <span class="solar-popup-m-val">${p.CAPACIDAD_MWP} MWp</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Área Predial</span>
+                  <span class="solar-popup-m-val">${p.AREA_HA} ha</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Módulos Bifaciales</span>
+                  <span class="solar-popup-m-val">${p.MODULOS_TOTAL.toLocaleString()}</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Generación Anual</span>
+                  <span class="solar-popup-m-val">${p.GENERACION_ESTIMADA}</span>
+                </div>
+              </div>
+              <div style="font-size:10.5px; color:#475569;">
+                <strong>Operador:</strong> ${p.OPERADOR}<br>
+                <strong>Licencia ANLA:</strong> ${p.ESTADO_LICENCIA}
+              </div>
+            </div>
+          `);
+        }
+      }).addTo(layerGroups.area);
+    }
+
+    // 2. Bloques Solares
+    function renderBloquesSolares(data) {
+      L.geoJSON(data, {
+        style: (feature) => {
+          const pct = feature.properties.avance_ponderado;
+          const color = pct >= 80 ? '#10b981' : (pct >= 40 ? '#f59e0b' : '#3b82f6');
+          return {
+            color: color,
+            weight: 2,
+            fillColor: color,
+            fillOpacity: 0.25
+          };
+        },
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          appState.markers.blocks[p.id] = layer;
+
+          layer.bindTooltip(`<b>${p.id}</b> · ${p.avance_ponderado}%`, {
+            permanent: false,
+            direction: 'center',
+            className: 'block-tooltip'
+          });
+
+          layer.bindPopup(`
+            <div class="solar-popup-head">
+              <div class="solar-popup-category">${p.zona}</div>
+              <div class="solar-popup-title">${p.name} (${p.potencia_mwp} MWp)</div>
+            </div>
+            <div class="solar-popup-body">
+              <div class="solar-popup-metrics">
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Avance Global</span>
+                  <span class="solar-popup-m-val" style="color:var(--solar-orange); font-size:14px;">${p.avance_ponderado} %</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Hincado</span>
+                  <span class="solar-popup-m-val">${p.hincado_pct} %</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Estructuras</span>
+                  <span class="solar-popup-m-val">${p.estructura_pct} %</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Módulos</span>
+                  <span class="solar-popup-m-val">${p.modulos_pct} %</span>
+                </div>
+              </div>
+              <div style="font-size:10.5px; color:#475569;">
+                <strong>Seguidores:</strong> ${p.num_trackers} trackers 1P<br>
+                <strong>Módulos:</strong> ${p.num_modulos.toLocaleString()} paneles TOPCon<br>
+                <strong>Inversor Asignado:</strong> ${p.inversor_id}
+              </div>
+              <button class="solar-popup-action-btn" onclick="selectBlock('${p.id}', true)">
+                📊 Ver Métricas en Panel Bloques
+              </button>
+            </div>
+          `);
+
+          layer.on('click', () => {
+            selectBlock(p.id, false);
+          });
+        }
+      }).addTo(layerGroups.bloques);
+    }
+
+    // 3. Inversores y Skids de Transformación
+    function renderInversores(data) {
+      L.geoJSON(data, {
+        pointToLayer: (feature, latlng) => {
+          const marker = L.marker(latlng, { icon: icons.inverter });
+          appState.markers.inversores[feature.properties.codigo] = marker;
+          return marker;
+        },
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          layer.bindPopup(`
+            <div class="solar-popup-head">
+              <div class="solar-popup-category">${p.tipo}</div>
+              <div class="solar-popup-title">${p.name}</div>
+            </div>
+            <div class="solar-popup-body">
+              <div class="solar-popup-metrics">
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Potencia</span>
+                  <span class="solar-popup-m-val">${p.potencia_mva} MVA</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Tensión</span>
+                  <span class="solar-popup-m-val">${p.tension_bt_mt}</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Strings DC</span>
+                  <span class="solar-popup-m-val">${p.strings_conectados}</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Estado</span>
+                  <span class="solar-popup-m-val" style="color:var(--solar-blue);">${p.estado}</span>
+                </div>
+              </div>
+              <div style="font-size:10.5px; color:#475569;">
+                <strong>Bloque Asociado:</strong> ${p.bloque_id}<br>
+                <strong>Aparamenta MT:</strong> ${p.celda_mt}
+              </div>
+            </div>
+          `);
+        }
+      }).addTo(layerGroups.inversores);
+    }
+
+    // 4. Subestación Solar
+    function renderSubestacion(data) {
+      L.geoJSON(data, {
+        style: {
+          color: '#eab308',
+          weight: 2.5,
+          fillColor: '#fef08a',
+          fillOpacity: 0.35
+        },
+        pointToLayer: (feature, latlng) => {
+          return L.marker(latlng, { icon: icons.substation });
+        },
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          if (p.codigo) {
+            layer.bindPopup(`
+              <div class="solar-popup-head">
+                <div class="solar-popup-category">${p.tipo}</div>
+                <div class="solar-popup-title">${p.name}</div>
+              </div>
+              <div class="solar-popup-body">
+                <div class="solar-popup-metrics">
+                  <div class="solar-popup-metric-item">
+                    <span class="solar-popup-m-lbl">Transformación</span>
+                    <span class="solar-popup-m-val">${p.potencia_transformacion}</span>
+                  </div>
+                  <div class="solar-popup-metric-item">
+                    <span class="solar-popup-m-lbl">Avance Global</span>
+                    <span class="solar-popup-m-val" style="color:var(--solar-orange);">${p.avance_general}</span>
+                  </div>
+                  <div class="solar-popup-metric-item">
+                    <span class="solar-popup-m-lbl">Celdas MT</span>
+                    <span class="solar-popup-m-val">${p.celdas_mt}</span>
+                  </div>
+                  <div class="solar-popup-metric-item">
+                    <span class="solar-popup-m-lbl">Baterías BESS</span>
+                    <span class="solar-popup-m-val">${p.bess_capacidad}</span>
+                  </div>
+                </div>
+                <div style="font-size:10.5px; color:#475569;">
+                  <strong>Estado:</strong> ${p.estado}<br>
+                  <strong>Bahías:</strong> ${p.bahias}
+                </div>
+                <button class="solar-popup-action-btn" onclick="switchToTab('substation')">
+                  ⚡ Ver en Panel Subestación
+                </button>
+              </div>
+            `);
+          }
+        }
+      }).addTo(layerGroups.subestacion);
+    }
+
+    // 5. Línea de Transmisión LAT 110 kV
+    function renderLineaTransmision(data) {
+      L.geoJSON(data, {
+        style: (feature) => {
+          if (feature.geometry.type === 'LineString') {
+            return {
+              color: '#475569',
+              weight: 3.5,
+              opacity: 0.85,
+              dashArray: '4, 4'
+            };
+          }
+        },
+        pointToLayer: (feature, latlng) => {
+          const marker = L.marker(latlng, { icon: icons.tower });
+          appState.markers.towers[feature.properties.codigo] = marker;
+          return marker;
+        },
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          if (feature.geometry.type === 'LineString') {
+            layer.bindPopup(`
+              <div class="solar-popup-head">
+                <div class="solar-popup-category">LÍNEA DE ALTA TENSIÓN</div>
+                <div class="solar-popup-title">${p.name}</div>
+              </div>
+              <div class="solar-popup-body">
+                <div class="solar-popup-metrics">
+                  <div class="solar-popup-metric-item">
+                    <span class="solar-popup-m-lbl">Tensión</span>
+                    <span class="solar-popup-m-val">${p.tension_kv} kV</span>
+                  </div>
+                  <div class="solar-popup-metric-item">
+                    <span class="solar-popup-m-lbl">Longitud</span>
+                    <span class="solar-popup-m-val">${p.longitud_km} km</span>
+                  </div>
+                  <div class="solar-popup-metric-item">
+                    <span class="solar-popup-m-lbl">Torres Total</span>
+                    <span class="solar-popup-m-val">${p.torres_total}</span>
+                  </div>
+                  <div class="solar-popup-metric-item">
+                    <span class="solar-popup-m-lbl">Tendido</span>
+                    <span class="solar-popup-m-val">${p.avance_tendido}</span>
+                  </div>
+                </div>
+              </div>
+            `);
+          } else {
+            layer.bindTooltip(p.codigo, { permanent: true, direction: 'right', className: 'tower-label' });
+            layer.bindPopup(`
+              <div class="solar-popup-head">
+                <div class="solar-popup-category">ESTRUCTURA LAT 110 KV</div>
+                <div class="solar-popup-title">${p.name}</div>
+              </div>
+              <div class="solar-popup-body">
+                <div class="solar-popup-metrics">
+                  <div class="solar-popup-metric-item">
+                    <span class="solar-popup-m-lbl">Avance Torre</span>
+                    <span class="solar-popup-m-val" style="color:var(--solar-orange);">${p.avance_global} %</span>
+                  </div>
+                  <div class="solar-popup-metric-item">
+                    <span class="solar-popup-m-lbl">Cimentación</span>
+                    <span class="solar-popup-m-val">${p.cimentacion_pct} %</span>
+                  </div>
+                  <div class="solar-popup-metric-item">
+                    <span class="solar-popup-m-lbl">Izaje</span>
+                    <span class="solar-popup-m-val">${p.izaje_pct} %</span>
+                  </div>
+                  <div class="solar-popup-metric-item">
+                    <span class="solar-popup-m-lbl">Tendido</span>
+                    <span class="solar-popup-m-val">${p.tendido_pct} %</span>
+                  </div>
+                </div>
+                <div style="font-size:10.5px; color:#475569;">
+                  <strong>Tipo:</strong> ${p.tipo_estructura} (${p.altura_m} m)<br>
+                  <strong>Conductor:</strong> ${p.conductor}
+                </div>
+              </div>
+            `);
+          }
+        }
+      }).addTo(layerGroups.linea);
+    }
+
+    // 6. Estación Meteorológica
+    function renderEstacionMeteo(data) {
+      L.geoJSON(data, {
+        pointToLayer: (feature, latlng) => {
+          const marker = L.marker(latlng, { icon: icons.meteo });
+          appState.markers.meteo = marker;
+          return marker;
+        },
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          layer.bindPopup(`
+            <div class="solar-popup-head">
+              <div class="solar-popup-category">SOLARIMETRÍA CLASE A (ISO 9060)</div>
+              <div class="solar-popup-title">${p.name}</div>
+            </div>
+            <div class="solar-popup-body">
+              <div class="solar-popup-metrics">
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">GHI Global</span>
+                  <span class="solar-popup-m-val" style="color:var(--solar-gold);">${p.ghi_actual}</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">DNI Directa</span>
+                  <span class="solar-popup-m-val">${p.dni_actual}</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">GTI en Módulo</span>
+                  <span class="solar-popup-m-val">${p.gti_plano_modulo}</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Temp. Célula</span>
+                  <span class="solar-popup-m-val">${p.temperatura_celula}</span>
+                </div>
+              </div>
+              <div style="font-size:10.5px; color:#475569;">
+                <strong>Viento:</strong> ${p.velocidad_viento}<br>
+                <strong>Soiling:</strong> ${p.factor_soiling}<br>
+                <strong>Calibración:</strong> ${p.cumplimiento_iec}
+              </div>
+            </div>
+          `);
+        }
+      }).addTo(layerGroups.meteo);
+    }
+
+    // 7. Obras Ambientales y Drenaje
+    function renderAmbientales(data) {
+      L.geoJSON(data, {
+        pointToLayer: (feature, latlng) => {
+          const p = feature.properties;
+          const icon = p.codigo.startsWith('OD') ? icons.drainage : icons.environmental;
+          const marker = L.marker(latlng, { icon: icon });
+          appState.markers.ambientales[p.codigo] = marker;
+          return marker;
+        },
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          layer.bindPopup(`
+            <div class="solar-popup-head">
+              <div class="solar-popup-category">${p.tipo_intervencion}</div>
+              <div class="solar-popup-title">${p.name}</div>
+            </div>
+            <div class="solar-popup-body">
+              <div class="solar-popup-metrics">
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Avance Físico</span>
+                  <span class="solar-popup-m-val" style="color:var(--eco-green);">${p.avance_fisico_pct} %</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Ficha PMA</span>
+                  <span class="solar-popup-m-val" style="font-size:10px;">${p.ficha_pma}</span>
+                </div>
+              </div>
+              <div style="font-size:10.5px; color:#475569;">
+                <strong>Especificación:</strong> ${p.especificacion}<br>
+                <strong>Ubicación/Cauce:</strong> ${p.cauce_zona}<br>
+                <strong>Estado:</strong> ${p.estado}
+              </div>
+              <button class="solar-popup-action-btn" onclick="switchToTab('ambient')">
+                🌿 Ver en Panel Ambiental
+              </button>
+            </div>
+          `);
+        }
+      }).addTo(layerGroups.ambientales);
+    }
+
+    // 8. Comunidades
+    function renderComunidades(data) {
+      L.geoJSON(data, {
+        pointToLayer: (feature, latlng) => {
+          const sem = feature.properties.Semaforo;
+          const icon = sem === 'Verde' ? icons.communityGreen : (sem === 'Amarillo' ? icons.communityYellow : icons.communityRed);
+          const marker = L.marker(latlng, { icon: icon });
+          appState.markers.comunidades[feature.id || feature.properties.name] = marker;
+          return marker;
+        },
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          layer.bindPopup(`
+            <div class="solar-popup-head">
+              <div class="solar-popup-category">${p.Tipo_Influencia}</div>
+              <div class="solar-popup-title">Comunidad ${p.name}</div>
+            </div>
+            <div class="solar-popup-body">
+              <div class="solar-popup-metrics">
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Relacionamiento</span>
+                  <span class="solar-popup-m-val" style="color:${p.Semaforo === 'Verde' ? '#10b981' : (p.Semaforo === 'Amarillo' ? '#f59e0b' : '#ef4444')};">
+                    ${p.Semaforo}
+                  </span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Distancia Parque</span>
+                  <span class="solar-popup-m-val">${p.Distancia_Parque_km} km</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Empleo Local</span>
+                  <span class="solar-popup-m-val" style="color:var(--solar-orange);">${p.Empleo_Local_Activo} personas</span>
+                </div>
+                <div class="solar-popup-metric-item">
+                  <span class="solar-popup-m-lbl">Última Visita</span>
+                  <span class="solar-popup-m-val" style="font-size:10px;">${p.Ultima_Visita}</span>
+                </div>
+              </div>
+              <div style="font-size:10.5px; color:#475569;">
+                <strong>Convenio Social:</strong> ${p.Convenio_Social}
+              </div>
+              <button class="solar-popup-action-btn" onclick="selectCommunity('${p.name}')">
+                👥 Abrir Ficha en Panel Entorno
+              </button>
+            </div>
+          `);
+
+          layer.on('click', () => {
+            selectCommunity(p.name);
+          });
+        }
+      }).addTo(layerGroups.comunidades);
+    }
+
+    // --- PROGRAMACIÓN SEMANAL & REACTIVIDAD ---
+    function initScheduleControls(sched) {
+      const weekSelect = document.getElementById('week-select');
+      weekSelect.innerHTML = '';
+
+      sched.weeks.forEach(w => {
+        const opt = document.createElement('option');
+        opt.value = w.id;
+        opt.textContent = `${w.label} (${w.sheet})`;
+        if (w.id === sched.defaultWeekId) opt.selected = true;
+        weekSelect.appendChild(opt);
+      });
+
+      appState.selectedWeekId = sched.defaultWeekId;
+
+      weekSelect.addEventListener('change', (e) => {
+        appState.selectedWeekId = e.target.value;
+        renderWeekDays();
+      });
+
+      renderWeekDays();
+    }
+
+    function renderWeekDays() {
+      const week = appState.scheduleData.weeks.find(w => w.id === appState.selectedWeekId);
+      if (!week) return;
+
+      const dayBtns = document.querySelectorAll('.day-button');
+      dayBtns.forEach(btn => {
+        const dayKey = btn.dataset.day;
+        if (dayKey === 'week-summary') {
+          btn.onclick = () => selectDay('week-summary');
+          return;
+        }
+
+        const dayData = week.days.find(d => d.key === dayKey);
+        if (dayData) {
+          const dateSpan = btn.querySelector('.day-date');
+          if (dateSpan) dateSpan.textContent = `${dayData.date}`;
+          btn.onclick = () => selectDay(dayKey);
+        }
+      });
+
+      selectDay(appState.selectedDayKey || 'monday');
+    }
+
+    function selectDay(dayKey) {
+      appState.selectedDayKey = dayKey;
+
+      document.querySelectorAll('.day-button').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.day === dayKey);
+      });
+
+      const week = appState.scheduleData.weeks.find(w => w.id === appState.selectedWeekId);
+      if (!week) return;
+
+      const container = document.getElementById('activity-items-list');
+      container.innerHTML = '';
+
+      let activities = [];
+      let dayTitle = "";
+      let activeBlocks = [];
+      let activeTowers = [];
+      let activeAmbientales = [];
+
+      if (dayKey === 'week-summary') {
+        dayTitle = `Resumen Semanal · ${week.label}`;
+        week.days.forEach(d => {
+          activities.push(...d.activities);
+          activeBlocks.push(...(d.blocks || []));
+          activeTowers.push(...(d.towers || []));
+          activeAmbientales.push(...(d.ambientales || []));
+        });
+      } else {
+        const day = week.days.find(d => d.key === dayKey);
+        if (day) {
+          dayTitle = `${day.name} ${day.date} de Octubre 2026`;
+          activities = day.activities || [];
+          activeBlocks = day.blocks || [];
+          activeTowers = day.towers || [];
+          activeAmbientales = day.ambientales || [];
+        }
+      }
+
+      document.getElementById('activity-day-title').textContent = dayTitle;
+      document.getElementById('activity-day-meta').textContent = `${activities.length} actividades programadas en frentes de obra`;
+      document.getElementById('day-feedback').textContent = `Jornada sincronizada: ${activities.length} frentes activos`;
+
+      // Renderizar items de actividades
+      activities.forEach(act => {
+        const item = document.createElement('div');
+        item.className = 'activity-item';
+        item.innerHTML = `
+          <span class="activity-badge">${act.front}</span>
+          <div class="activity-title">${act.title}</div>
+          <div class="activity-location">📍 ${act.location}</div>
+        `;
+        item.onclick = () => {
+          highlightLocation(act.location);
+        };
+        container.appendChild(item);
+      });
+
+      // Resaltar en el mapa los bloques activos para el día
+      highlightScheduledEntities(activeBlocks, activeTowers, activeAmbientales);
+    }
+
+    function highlightScheduledEntities(blockIds, towerIds, ambIds) {
+      // Restablecer estilos
+      Object.entries(appState.markers.blocks).forEach(([id, layer]) => {
+        const isActive = blockIds.includes(id);
+        layer.setStyle({
+          fillOpacity: isActive ? 0.6 : 0.2,
+          weight: isActive ? 3.5 : 2,
+          color: isActive ? '#f59e0b' : '#3b82f6'
+        });
+      });
+    }
+
+    function highlightLocation(locStr) {
+      // Buscar si menciona algún bloque FV
+      const blockMatch = locStr.match(/FV-\d+/i);
+      if (blockMatch) {
+        const bId = blockMatch[0].toUpperCase();
+        if (appState.markers.blocks[bId]) {
+          map.fitBounds(appState.markers.blocks[bId].getBounds(), { padding: [40, 40], maxZoom: 16 });
+          appState.markers.blocks[bId].openPopup();
+          return;
+        }
+      }
+      // Buscar si menciona torre ST
+      const towerMatch = locStr.match(/ST-\d+/i);
+      if (towerMatch) {
+        const tId = towerMatch[0].toUpperCase();
+        if (appState.markers.towers[tId]) {
+          map.setView(appState.markers.towers[tId].getLatLng(), 16);
+          appState.markers.towers[tId].openPopup();
+          return;
+        }
+      }
+      // Subestación
+      if (locStr.toLowerCase().includes('subestación') || locStr.toLowerCase().includes('se guajira')) {
+        map.setView([11.610, -72.004], 16);
+        return;
+      }
+      // Campamento / Vivero
+      if (locStr.toLowerCase().includes('vivero') || locStr.toLowerCase().includes('viv-01')) {
+        map.setView([11.615, -72.006], 16);
+        return;
+      }
+    }
+
+    // --- PANELES SELECTORES Y NAVEGACIÓN ---
+    function initSelectControls() {
+      // 1. Selector de Bloque
+      const blockSel = document.getElementById('block-quick-select');
+      appState.geoLayers.bloques.features.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.properties.id;
+        opt.textContent = `${f.properties.id} · ${f.properties.name} (${f.properties.avance_ponderado}%)`;
+        blockSel.appendChild(opt);
+      });
+
+      blockSel.onchange = (e) => {
+        selectBlock(e.target.value, true);
+      };
+
+      document.getElementById('blocks-reset-btn').onclick = () => {
+        selectBlock('ALL', true);
+      };
+
+      // 2. Selector de Torres LAT
+      const towerSel = document.getElementById('tower-select');
+      const towerFeatures = appState.geoLayers.linea.features.filter(f => f.geometry.type === 'Point');
+      towerFeatures.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.properties.codigo;
+        opt.textContent = `${f.properties.codigo} · ${f.properties.name} (${f.properties.avance_global}%)`;
+        towerSel.appendChild(opt);
+      });
+
+      towerSel.onchange = (e) => {
+        selectTower(e.target.value);
+      };
+
+      // 3. Selector de Puntos Ambientales
+      const ambSel = document.getElementById('ambient-select');
+      appState.geoLayers.ambientales.features.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.properties.codigo;
+        opt.textContent = `${f.properties.codigo} · ${f.properties.name}`;
+        ambSel.appendChild(opt);
+      });
+
+      ambSel.onchange = (e) => {
+        selectAmbient(e.target.value);
+      };
+
+      // 4. Selector de Comunidades
+      const comSel = document.getElementById('community-select');
+      const comFeatures = [...appState.geoLayers.comunidades.features].sort((a,b) => a.properties.name.localeCompare(b.properties.name));
+      comFeatures.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.properties.name;
+        opt.textContent = `${f.properties.name} (${f.properties.Semaforo}) · ${f.properties.Distancia_Parque_km} km`;
+        comSel.appendChild(opt);
+      });
+
+      comSel.onchange = (e) => {
+        selectCommunity(e.target.value);
+      };
+    }
+
+    // Lógica al seleccionar un Bloque
+    function selectBlock(blockId, zoomTo) {
+      appState.selectedBlockId = blockId;
+      document.getElementById('block-quick-select').value = blockId;
+
+      const resetBtn = document.getElementById('blocks-reset-btn');
+      const scopeBadge = document.getElementById('blocks-scope-badge');
+      const scopeTitle = document.getElementById('blocks-scope-title');
+      const scopeSubtitle = document.getElementById('blocks-scope-subtitle');
+
+      if (blockId === 'ALL') {
+        resetBtn.style.display = 'none';
+        scopeBadge.textContent = 'Consolidado 200 MWp';
+        scopeTitle.textContent = 'Todo el Parque Solar';
+        scopeSubtitle.textContent = '10 Bloques Fotovoltaicos · 328.000 Módulos Bifaciales';
+
+        document.getElementById('kpi-block-ponderado').textContent = '64.8 %';
+        document.getElementById('bar-block-ponderado').style.width = '64.8%';
+        document.getElementById('kpi-block-caption').textContent = '10 Bloques FV · 196.8 MWp en Construcción';
+
+        document.getElementById('kpi-val-hincado').textContent = '80.0 %';
+        document.getElementById('bar-val-hincado').style.width = '80.0%';
+        document.getElementById('kpi-val-estructura').textContent = '68.0 %';
+        document.getElementById('bar-val-estructura').style.width = '68.0%';
+        document.getElementById('kpi-val-modulos').textContent = '55.4 %';
+        document.getElementById('bar-val-modulos').style.width = '55.4%';
+        document.getElementById('kpi-val-zanjeo').textContent = '70.1 %';
+        document.getElementById('bar-val-zanjeo').style.width = '70.1%';
+        document.getElementById('kpi-val-cableado').textContent = '49.4 %';
+        document.getElementById('bar-val-cableado').style.width = '49.4%';
+        document.getElementById('kpi-val-comision').textContent = '34.0 %';
+        document.getElementById('bar-val-comision').style.width = '34.0%';
+
+        document.getElementById('dossier-mwp').textContent = '196.8 MWp Total';
+        document.getElementById('dossier-inversor').textContent = '10 Centros CT-01 a CT-10';
+
+        if (zoomTo) {
+          map.setView([11.610, -72.019], 14);
+        }
+      } else {
+        const feat = appState.geoLayers.bloques.features.find(f => f.properties.id === blockId);
+        if (!feat) return;
+        const p = feat.properties;
+
+        resetBtn.style.display = 'inline-flex';
+        scopeBadge.textContent = p.zona;
+        scopeTitle.textContent = `${p.id} · ${p.name}`;
+        scopeSubtitle.textContent = `Capacidad: ${p.potencia_mwp} MWp · Inversor: ${p.inversor_id}`;
+
+        document.getElementById('kpi-block-ponderado').textContent = `${p.avance_ponderado} %`;
+        document.getElementById('bar-block-ponderado').style.width = `${p.avance_ponderado}%`;
+        document.getElementById('kpi-block-caption').textContent = `Estado: ${p.estado}`;
+
+        document.getElementById('kpi-val-hincado').textContent = `${p.hincado_pct} %`;
+        document.getElementById('bar-val-hincado').style.width = `${p.hincado_pct}%`;
+        document.getElementById('kpi-val-estructura').textContent = `${p.estructura_pct} %`;
+        document.getElementById('bar-val-estructura').style.width = `${p.estructura_pct}%`;
+        document.getElementById('kpi-val-modulos').textContent = `${p.modulos_pct} %`;
+        document.getElementById('bar-val-modulos').style.width = `${p.modulos_pct}%`;
+        document.getElementById('kpi-val-zanjeo').textContent = `${p.zanjeo_pct} %`;
+        document.getElementById('bar-val-zanjeo').style.width = `${p.zanjeo_pct}%`;
+        document.getElementById('kpi-val-cableado').textContent = `${p.cableado_pct} %`;
+        document.getElementById('bar-val-cableado').style.width = `${p.cableado_pct}%`;
+        document.getElementById('kpi-val-comision').textContent = `${p.comisionamiento_pct} %`;
+        document.getElementById('bar-val-comision').style.width = `${p.comisionamiento_pct}%`;
+
+        document.getElementById('dossier-mwp').textContent = `${p.potencia_mwp} MWp (${p.num_modulos.toLocaleString()} paneles)`;
+        document.getElementById('dossier-inversor').textContent = `Centro de Transformación ${p.inversor_id}`;
+
+        if (zoomTo && appState.markers.blocks[blockId]) {
+          map.fitBounds(appState.markers.blocks[blockId].getBounds(), { padding: [50, 50], maxZoom: 16 });
+          appState.markers.blocks[blockId].openPopup();
+        }
+      }
+
+      switchToTab('blocks');
+    }
+
+    // Lógica al seleccionar una Torre
+    function selectTower(towerCode) {
+      if (towerCode === 'ALL') {
+        document.getElementById('kpi-lat-ciment').textContent = '68.0 %';
+        document.getElementById('bar-lat-ciment').style.width = '68%';
+        document.getElementById('kpi-lat-izaje').textContent = '55.0 %';
+        document.getElementById('bar-lat-izaje').style.width = '55%';
+        document.getElementById('kpi-lat-tendido').textContent = '42.0 %';
+        document.getElementById('bar-lat-tendido').style.width = '42%';
+        map.setView([11.580, -71.995], 13);
+      } else {
+        const feat = appState.geoLayers.linea.features.find(f => f.properties && f.properties.codigo === towerCode);
+        if (!feat) return;
+        const p = feat.properties;
+
+        document.getElementById('kpi-lat-ciment').textContent = `${p.cimentacion_pct} %`;
+        document.getElementById('bar-lat-ciment').style.width = `${p.cimentacion_pct}%`;
+        document.getElementById('kpi-lat-izaje').textContent = `${p.izaje_pct} %`;
+        document.getElementById('bar-lat-izaje').style.width = `${p.izaje_pct}%`;
+        document.getElementById('kpi-lat-tendido').textContent = `${p.tendido_pct} %`;
+        document.getElementById('bar-lat-tendido').style.width = `${p.tendido_pct}%`;
+
+        if (appState.markers.towers[towerCode]) {
+          map.setView(appState.markers.towers[towerCode].getLatLng(), 16);
+          appState.markers.towers[towerCode].openPopup();
+        }
+      }
+    }
+
+    // Lógica al seleccionar Punto Ambiental
+    function selectAmbient(ambCode) {
+      if (ambCode === 'ALL') {
+        map.setView([11.610, -72.019], 14);
+      } else {
+        const marker = appState.markers.ambientales[ambCode];
+        if (marker) {
+          map.setView(marker.getLatLng(), 16);
+          marker.openPopup();
+        }
+      }
+    }
+
+    // Lógica al seleccionar Comunidad
+    function selectCommunity(name) {
+      if (!name) return;
+      document.getElementById('community-select').value = name;
+
+      const feat = appState.geoLayers.comunidades.features.find(f => f.properties.name === name);
+      if (!feat) return;
+      const p = feat.properties;
+
+      document.getElementById('dossier-com-title').textContent = `Comunidad ${p.name}`;
+      document.getElementById('dossier-com-sem').innerHTML = `<span style="color:${p.Semaforo === 'Verde' ? '#10b981' : (p.Semaforo === 'Amarillo' ? '#f59e0b' : '#ef4444')}; font-weight:800;">${p.Semaforo}</span>`;
+      document.getElementById('dossier-com-infl').textContent = p.Tipo_Influencia;
+      document.getElementById('dossier-com-dist').textContent = `${p.Distancia_Parque_km} km`;
+      document.getElementById('dossier-com-empleo').textContent = `${p.Empleo_Local_Activo} personas vinculadas`;
+      document.getElementById('dossier-com-consulta').textContent = p.Estado_Consulta;
+      document.getElementById('dossier-com-convenio').textContent = p.Convenio_Social;
+      document.getElementById('dossier-com-bitacora').textContent = p.Observaciones_Bitacora;
+
+      switchToTab('entorno');
+
+      const marker = appState.markers.comunidades[feat.id || p.name];
+      if (marker) {
+        map.setView(marker.getLatLng(), 15);
+        marker.openPopup();
+      }
+    }
+
+    // Semáforo social y filtro espacial
+    function initSocialFilter() {
+      const cards = document.querySelectorAll('.social-kpi-card');
+      cards.forEach(card => {
+        card.onclick = () => {
+          cards.forEach(c => c.classList.remove('is-active'));
+          card.classList.add('is-active');
+
+          const sem = card.dataset.semaforo;
+          appState.activeSocialFilter = sem;
+
+          const bounds = [];
+          Object.entries(appState.markers.comunidades).forEach(([id, marker]) => {
+            const feat = appState.geoLayers.comunidades.features.find(f => (f.id || f.properties.name) === id);
+            if (!feat) return;
+
+            const matches = sem === 'ALL' || feat.properties.Semaforo === sem;
+            if (matches) {
+              marker.setOpacity(1.0);
+              bounds.push(marker.getLatLng());
+            } else {
+              marker.setOpacity(0.15);
+            }
+          });
+
+          if (bounds.length > 0) {
+            map.fitBounds(L.latLngBounds(bounds), { padding: [40, 40] });
+          }
+        };
+      });
+    }
+
+    // Control de pestañas del panel lateral
+    function initNavigationTabs() {
+      const tabBtns = document.querySelectorAll('.sidebar-tab-btn');
+      tabBtns.forEach(btn => {
+        btn.onclick = () => {
+          switchToTab(btn.dataset.tab);
+        };
+      });
+    }
+
+    function switchToTab(tabName) {
+      appState.activeTab = tabName;
+
+      document.querySelectorAll('.sidebar-tab-btn').forEach(b => {
+        b.classList.toggle('is-active', b.dataset.tab === tabName);
+      });
+
+      document.querySelectorAll('.panel-view').forEach(p => {
+        p.style.display = p.id === `panel-${tabName}` ? 'flex' : 'none';
+      });
+    }
+
+    // Toggle de capas del mapa
+    function initLayerToggles() {
+      const toggleMap = {
+        'layer-chk-bloques': layerGroups.bloques,
+        'layer-chk-area': layerGroups.area,
+        'layer-chk-inversores': layerGroups.inversores,
+        'layer-chk-subestacion': layerGroups.subestacion,
+        'layer-chk-linea': layerGroups.linea,
+        'layer-chk-meteo': layerGroups.meteo,
+        'layer-chk-ambientales': layerGroups.ambientales,
+        'layer-chk-comunidades': layerGroups.comunidades
+      };
+
+      Object.entries(toggleMap).forEach(([chkId, layerGroup]) => {
+        const chk = document.getElementById(chkId);
+        if (chk) {
+          chk.onchange = (e) => {
+            if (e.target.checked) {
+              map.addLayer(layerGroup);
+            } else {
+              map.removeLayer(layerGroup);
+            }
+          };
+        }
+      });
+    }
+
+    // Botones rápidos del mapa
+    function initQuickMapButtons() {
+      document.getElementById('btn-focus-park').onclick = () => {
+        map.setView([11.610, -72.019], 14);
+      };
+      document.getElementById('qbtn-park').onclick = () => {
+        map.setView([11.610, -72.019], 14);
+      };
+      document.getElementById('qbtn-sub').onclick = () => {
+        map.setView([11.610, -72.004], 16);
+      };
+      document.getElementById('qbtn-line').onclick = () => {
+        map.setView([11.580, -71.995], 13);
+      };
+      document.getElementById('qbtn-env').onclick = () => {
+        map.setView([11.615, -72.015], 15);
+      };
+      document.getElementById('btn-focus-all').onclick = () => {
+        map.setView([11.580, -72.010], 12);
+      };
+      document.getElementById('qbtn-all').onclick = () => {
+        map.setView([11.580, -72.010], 12);
+      };
+    }
+
+    // Iniciar carga al cargar la ventana
+    window.addEventListener('DOMContentLoaded', loadData);
+  </script>
+</body>
+</html>
