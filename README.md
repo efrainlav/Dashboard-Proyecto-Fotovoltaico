@@ -2,6 +2,13 @@
 
 Visor geográfico interactivo de alta precisión para el seguimiento integral de obras de energía solar fotovoltaica utility-scale (200 MWp / 160 MW AC): avance físico de bloques solares, subestación elevadora, línea de transmisión, cumplimiento ambiental y relacionamiento comunitario.
 
+> [!IMPORTANT]
+> ### 📢 AVISO DE DATOS DEMO / INFORMACIÓN DUMMY
+> **Toda la información presentada en este repositorio y en el dashboard es 100% ficticia (dummy / mock data).**
+> Este proyecto ha sido desarrollado exclusivamente como una **prueba de concepto (PoC) y demostración técnica** para evaluar y validar el uso de tableros de control interactivos y visores GIS aplicados al seguimiento, control de obra y monitoreo integral de proyectos de energía solar fotovoltaica.
+> 
+> Las métricas de avance físico, cronogramas, frentes de obra, nombres de comunidades, registros ambientales y especificaciones no corresponden a ninguna obra ni entidad real en operación.
+
 ---
 
 ## ☀️ Resumen Técnico del Proyecto
@@ -99,6 +106,9 @@ Para ejecutarlo localmente:
 
 ---
 
-## ⚠️ Declaración de Datos de Seguimiento (Datos Demo)
+## ⚠️ Declaración de Datos Demo y Alcance de Prueba
 
-Los datos de avance físico, cronogramas y registros de bitácora han sido generados con fines ilustrativos, didácticos y de prototipado técnico de tableros de control GIS para la industria de energía renovable no convencional.
+- **Naturaleza de los Datos:** Toda la información contenida en este repositorio (incluyendo archivos GeoJSON, cronograma semanal `programacion-semanal.json`, métricas de ingeniería, avances porcentuales, comunidades y registros bióticos/ambientales) es **100% ficticia (dummy)**.
+- **Objetivo Exclusivo:** Servir como entorno de prueba, maquetación y demostración para evaluar la usabilidad, experiencia visual (UI/UX) y potencial de los tableros de control geográficos (dashboards GIS) en el seguimiento de proyectos fotovoltaicos.
+- **Sin Vinculación Comercial ni Real:** Los datos no representan ningún proyecto solar específico en construcción ni comprometen a empresas, entidades reguladoras ni comunidades reales.
+
